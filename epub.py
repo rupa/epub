@@ -18,27 +18,11 @@ Keyboard commands:
 '''
 
 import formatter, htmllib, locale, os, StringIO, readline, string, zipfile
-import random
-from bisect import bisect
 import curses.wrapper, curses.ascii
-
-from PIL import Image
 
 from BeautifulSoup import BeautifulSoup
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
-
-greyscale = [
-    " ",
-    " ",
-    ".,-",
-    "_ivc=!/|\\~",
-    "gjez2]/(YL)t[+T7Vf",
-    "mdK4ZGbNDXY5P*Q",
-    "W8KMA",
-    "#%$"
-]
-zonebounds=[36,72,108,144,180,216,252]
 
 def textify(fl, html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
@@ -47,20 +31,6 @@ def textify(fl, html_snippet, img_size=(80, 45)):
             self.anchor = None
         def handle_image(self, source, alt, ismap, alight, width, height):
             self.handle_data(alt + ' ' + source)
-            return
-            img = Image.open(StringIO.StringIO(fl.read(source)))
-            img.thumbnail(img_size)
-            img = img.convert('L') # convert to mono
-            str = ''
-            for y in range(0,img.size[1]):
-                for x in range(0,img.size[0]):
-                    lum=255-img.getpixel((x,y))
-                    row=bisect(zonebounds,lum)
-                    possibles=greyscale[row]
-                    str=str+possibles[random.randint(0,len(possibles)-1)]
-                str=str+'\n'
-            str = str + '{0}'.format(source)
-            self.handle_data(str)
 
     class Formatter(formatter.AbstractFormatter):
         pass
