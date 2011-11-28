@@ -17,7 +17,7 @@ Keyboard commands:
         PgDown     - down a line
 '''
 
-import formatter, htmllib, locale, os, StringIO, readline, string, zipfile
+import formatter, htmllib, locale, os, StringIO, readline, zipfile
 import curses.wrapper, curses.ascii
 
 from BeautifulSoup import BeautifulSoup
