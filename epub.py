@@ -30,7 +30,7 @@ def textify(fl, html_snippet, img_size=(80, 45)):
         def anchor_end(self):
             self.anchor = None
         def handle_image(self, source, alt, ismap, alight, width, height):
-            self.handle_data(alt + ' ' + source)
+            self.handle_data('{0} [img="{1}"]'.format(alt, source))
 
     class Formatter(formatter.AbstractFormatter):
         pass
