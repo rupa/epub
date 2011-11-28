@@ -18,17 +18,49 @@ Keyboard commands:
 '''
 
 import formatter, htmllib, locale, os, StringIO, readline, string, zipfile
+import random
+from bisect import bisect
 import curses.wrapper, curses.ascii
+
+from PIL import Image
 
 from BeautifulSoup import BeautifulSoup
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
 
-def textify(html_snippet):
+greyscale = [
+    " ",
+    " ",
+    ".,-",
+    "_ivc=!/|\\~",
+    "gjez2]/(YL)t[+T7Vf",
+    "mdK4ZGbNDXY5P*Q",
+    "W8KMA",
+    "#%$"
+]
+zonebounds=[36,72,108,144,180,216,252]
+
+def textify(fl, html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
     class Parser(htmllib.HTMLParser):
         def anchor_end(self):
             self.anchor = None
+        def handle_image(self, source, alt, ismap, alight, width, height):
+            self.handle_data(alt + ' ' + source)
+            return
+            img = Image.open(StringIO.StringIO(fl.read(source)))
+            img.thumbnail(img_size)
+            img = img.convert('L') # convert to mono
+            str = ''
+            for y in range(0,img.size[1]):
+                for x in range(0,img.size[0]):
+                    lum=255-img.getpixel((x,y))
+                    row=bisect(zonebounds,lum)
+                    possibles=greyscale[row]
+                    str=str+possibles[random.randint(0,len(possibles)-1)]
+                str=str+'\n'
+            str = str + '{0}'.format(source)
+            self.handle_data(str)
 
     class Formatter(formatter.AbstractFormatter):
         pass
@@ -54,15 +86,14 @@ def toc(fl):
             navpoint.content.get('src', None).encode('utf-8')
         )
 
-def chapter(fl, src):
-    soup = BeautifulSoup(fl.read(src))
-    return textify(unicode(soup.find('body')).encode('utf-8'))
-
 def list_chaps(screen, chaps, start, length):
     for i, (title, src) in enumerate(chaps[start:start+length]):
-        screen.addstr(i, 0, '{0:-5} {1}'.format(start, title))
-        screen.refresh()
+        try:
+            screen.addstr(i, 0, '{0:-5} {1}'.format(start, title))
+        except:
+            pass
         start += 1
+    screen.refresh()
     return i
 
 def check_epub(fl):
@@ -78,7 +109,8 @@ def dump_epub(fl):
         print title
         print '-' * len(title)
         if src:
-            print chapter(fl, src)
+            soup = BeautifulSoup(fl.read(src))
+            print textify(fl, unicode(soup.find('body')).encode('utf-8'))
         print '\n'
 
 def curses_epub(screen, fl):
@@ -143,7 +175,12 @@ def curses_epub(screen, fl):
         # to chapter
         elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
             if chaps[start + cursor_row][1]:
-                chap = chapter(fl, chaps[start + cursor_row][1]).split('\n')
+                soup = BeautifulSoup(fl.read(chaps[start + cursor_row][1]))
+                chap = textify(
+                    fl,
+                    unicode(soup.find('body')).encode('utf-8'),
+                    img_size=screen.getmaxyx()
+                ).split('\n')
             else:
                 chap = ''
             screen.clear()
@@ -152,9 +189,13 @@ def curses_epub(screen, fl):
             # chapter
             while True:
                 maxy, maxx = screen.getmaxyx()
-                screen.addstr(0, 0, '\n'.join(
-                    chap[chaps_pos[cursor_row]:chaps_pos[cursor_row]+maxy]
-                ))
+                for i, line in enumerate(chap[
+                    chaps_pos[cursor_row]:chaps_pos[cursor_row]+maxy
+                    ]):
+                    try:
+                        screen.addstr(i, 0, line)
+                    except:
+                        pass
                 screen.refresh()
                 ch = screen.getch()
 
