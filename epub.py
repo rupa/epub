@@ -59,7 +59,10 @@ def toc(fl):
 def list_chaps(screen, chaps, start, length):
     for i, (title, src) in enumerate(chaps[start:start+length]):
         try:
-            screen.addstr(i, 0, '{0:-5} {1}'.format(start, title))
+            if start == 0:
+                screen.addstr(i, 0, '      {0}'.format(title), curses.A_BOLD)
+            else:
+                screen.addstr(i, 0, '{0:-5} {1}'.format(start, title))
         except:
             pass
         start += 1
