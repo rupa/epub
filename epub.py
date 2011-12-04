@@ -15,14 +15,36 @@ Keyboard commands:
         Down       - down a page
         PgUp       - up a line
         PgDown     - down a line
+        i          - open images on page in web browser
 '''
 
-import formatter, htmllib, locale, os, StringIO, readline, zipfile
 import curses.wrapper, curses.ascii
+import formatter, htmllib, locale, os, StringIO, re, readline, zipfile
+import base64, webbrowser
 
 from BeautifulSoup import BeautifulSoup
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
+
+def open_image(name, s):
+    ''' open an image in webbrowser with a data url '''
+    ext = os.path.splitext(name)[1]
+    try:
+        mime = {
+            '.gif': 'image/gif',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+        }[ext]
+    except KeyError as e:
+        return
+    try:
+        webbrowser.open_new_tab('data:{0};base64,{1}'.format(
+            mime,
+            base64.b64encode(s)
+        ))
+    except IOError as e:
+        pass
 
 def textify(fl, html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
@@ -89,6 +111,8 @@ def dump_epub(fl):
 def curses_epub(screen, fl):
     if not check_epub(fl):
         return
+
+    #curses.mousemask(curses.BUTTON1_CLICKED)
 
     fl = zipfile.ZipFile(fl, 'r')
     chaps = [i for i in toc(fl)]
@@ -162,11 +186,15 @@ def curses_epub(screen, fl):
             # chapter
             while True:
                 maxy, maxx = screen.getmaxyx()
+                images = []
                 for i, line in enumerate(chap[
                     chaps_pos[cursor_row]:chaps_pos[cursor_row]+maxy
                     ]):
                     try:
                         screen.addstr(i, 0, line)
+                        mch = re.search('\[img="([^"]+)" "([^"]*)"\]', line)
+                        if mch:
+                            images.append(mch.group(1))
                     except:
                         pass
                 screen.refresh()
@@ -208,6 +236,20 @@ def curses_epub(screen, fl):
                         chaps_pos[cursor_row] -= 1
                         screen.clear()
 
+                #elif ch in [curses.KEY_MOUSE]:
+                #    id, x, y, z, bstate = curses.getmouse()
+                #    line = screen.instr(y, 0)
+                #    mch = re.search('\[img="([^"]+)" "([^"]*)"\]', line)
+                #    if mch:
+                #            img_fl = mch.group(1)
+
+                else:
+                    try:
+                        if chr(ch) == 'i':
+                            for img in images:
+                                open_image(img, fl.read(img))
+                    except (ValueError, IndexError):
+                        pass
 
 if __name__ == '__main__':
     import argparse
