@@ -69,14 +69,38 @@ def textify(fl, html_snippet, img_size=(80, 45)):
 
     return o.getvalue()
 
-def toc(fl):
-    soup = BeautifulSoup(fl.read('toc.ncx'))
-    yield (soup.find('doctitle').text, None)
+def table_of_contents(fl):
+    soup =  BeautifulSoup(fl.read('content.opf'))
+
+    # title
+    yield (soup.find('dc:title').text, None)
+
+    # all files, not in order
+    x = {}
+    for item in soup.find('manifest').findAll('item'):
+        d = dict(item.attrs)
+        x[d['id']] = d['href']
+
+    # order of files
+    y = []
+    for item in soup.find('spine').findAll('itemref'):
+        y.append(x[dict(item.attrs)['idref']])
+
+    soup =  BeautifulSoup(fl.read('toc.ncx'))
+
+    # toc
+    z = {}
     for navpoint in soup('navpoint'):
-        yield (
-            navpoint.navlabel.text.encode('utf-8'),
-            navpoint.content.get('src', None).encode('utf-8')
-        )
+        k = navpoint.content.get('src', None)
+        if k:
+            z[k] = navpoint.navlabel.text
+
+    # output
+    for section in y:
+        if section in z:
+            yield (z[section].encode('utf-8'), section.encode('utf-8'))
+        else:
+            yield (u'*', section.encode('utf-8').strip())
 
 def list_chaps(screen, chaps, start, length):
     for i, (title, src) in enumerate(chaps[start:start+length]):
@@ -99,7 +123,7 @@ def dump_epub(fl):
     if not check_epub(fl):
         return
     fl = zipfile.ZipFile(fl, 'r')
-    chaps = [i for i in toc(fl)]
+    chaps = [i for i in table_of_contents(fl)]
     for title, src in chaps:
         print title
         print '-' * len(title)
@@ -115,7 +139,7 @@ def curses_epub(screen, fl):
     #curses.mousemask(curses.BUTTON1_CLICKED)
 
     fl = zipfile.ZipFile(fl, 'r')
-    chaps = [i for i in toc(fl)]
+    chaps = [i for i in table_of_contents(fl)]
     chaps_pos = [0 for i in chaps]
     start = 0
     cursor_row = 0
