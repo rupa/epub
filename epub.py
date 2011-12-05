@@ -81,14 +81,14 @@ def table_of_contents(fl):
         d = dict(item.attrs)
         x[d['id']] = d['href']
 
-    # order of files
+    # reading order, not all files
     y = []
     for item in soup.find('spine').findAll('itemref'):
         y.append(x[dict(item.attrs)['idref']])
 
     soup =  BeautifulSoup(fl.read('toc.ncx'))
 
-    # toc
+    # get titles from the toc
     z = {}
     for navpoint in soup('navpoint'):
         k = navpoint.content.get('src', None)
@@ -100,7 +100,7 @@ def table_of_contents(fl):
         if section in z:
             yield (z[section].encode('utf-8'), section.encode('utf-8'))
         else:
-            yield (u'*', section.encode('utf-8').strip())
+            yield (u'', section.encode('utf-8').strip())
 
 def list_chaps(screen, chaps, start, length):
     for i, (title, src) in enumerate(chaps[start:start+length]):
