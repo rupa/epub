@@ -70,30 +70,38 @@ def textify(fl, html_snippet, img_size=(80, 45)):
     return o.getvalue()
 
 def table_of_contents(fl):
-    soup =  BeautifulSoup(fl.read('content.opf'))
+
+    # find opf file
+    soup = BeautifulSoup(fl.read('META-INF/container.xml'))
+    opf = dict(soup.find('rootfile').attrs)['full-path']
+
+    soup =  BeautifulSoup(fl.read(opf))
 
     # title
     yield (soup.find('dc:title').text, None)
 
     # all files, not in order
-    x = {}
+    x, ncx = {}, None
     for item in soup.find('manifest').findAll('item'):
         d = dict(item.attrs)
         x[d['id']] = d['href']
+        if d['media-type'] == 'application/x-dtbncx+xml':
+            ncx = d['href']
 
     # reading order, not all files
     y = []
     for item in soup.find('spine').findAll('itemref'):
         y.append(x[dict(item.attrs)['idref']])
 
-    soup =  BeautifulSoup(fl.read('toc.ncx'))
-
-    # get titles from the toc
     z = {}
-    for navpoint in soup('navpoint'):
-        k = navpoint.content.get('src', None)
-        if k:
-            z[k] = navpoint.navlabel.text
+    if ncx:
+        # get titles from the toc
+        soup =  BeautifulSoup(fl.read(ncx))
+
+        for navpoint in soup('navpoint'):
+            k = navpoint.content.get('src', None)
+            if k:
+                z[k] = navpoint.navlabel.text
 
     # output
     for section in y:
