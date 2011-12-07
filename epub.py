@@ -37,14 +37,14 @@ def open_image(name, s):
             '.png': 'image/png',
         }[ext]
     except KeyError as e:
-        return
+        return 'error: unrecognized extension {0}'.format(ext)
     try:
         webbrowser.open_new_tab('data:{0};base64,{1}'.format(
             mime,
             base64.b64encode(s)
         ))
     except IOError as e:
-        pass
+        return 'error: {0}'.format(ex)
 
 def textify(fl, html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
@@ -279,7 +279,9 @@ def curses_epub(screen, fl):
                     try:
                         if chr(ch) == 'i':
                             for img in images:
-                                open_image(img, fl.read(img))
+                                err = open_image(img, fl.read(img))
+                                if err:
+                                    screen.addstr(0, 0, err, curses.A_REVERSE)
                     except (ValueError, IndexError):
                         pass
 
