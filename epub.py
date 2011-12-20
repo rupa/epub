@@ -75,6 +75,10 @@ def table_of_contents(fl):
     soup = BeautifulSoup(fl.read('META-INF/container.xml'))
     opf = dict(soup.find('rootfile').attrs)['full-path']
 
+    basedir = os.path.dirname(opf)
+    if basedir:
+        basedir = '{0}/'.format(basedir)
+
     soup =  BeautifulSoup(fl.read(opf))
 
     # title
@@ -84,9 +88,9 @@ def table_of_contents(fl):
     x, ncx = {}, None
     for item in soup.find('manifest').findAll('item'):
         d = dict(item.attrs)
-        x[d['id']] = d['href']
+        x[d['id']] = '{0}{1}'.format(basedir, d['href'])
         if d['media-type'] == 'application/x-dtbncx+xml':
-            ncx = d['href']
+            ncx = '{0}{1}'.format(basedir, d['href'])
 
     # reading order, not all files
     y = []
