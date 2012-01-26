@@ -104,6 +104,8 @@ def table_of_contents(fl):
 
         for navpoint in soup('navpoint'):
             k = navpoint.content.get('src', None)
+            # strip off any anchor text
+            k = k.split('#')[0]
             if k:
                 z[k] = navpoint.navlabel.text
 
