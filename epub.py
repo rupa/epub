@@ -20,11 +20,13 @@ Keyboard commands:
 
 import curses.wrapper, curses.ascii
 import formatter, htmllib, locale, os, StringIO, re, readline, zipfile
-import base64, webbrowser
+import base64, sys, webbrowser
 
 from BeautifulSoup import BeautifulSoup
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
+
+basedir = ''
 
 def open_image(name, s):
     ''' open an image in webbrowser with a data url '''
@@ -36,14 +38,14 @@ def open_image(name, s):
             '.jpeg': 'image/jpeg',
             '.png': 'image/png',
         }[ext]
-    except KeyError as e:
+    except KeyError as ex:
         return 'error: unrecognized extension {0}'.format(ext)
     try:
         webbrowser.open_new_tab('data:{0};base64,{1}'.format(
             mime,
             base64.b64encode(s)
         ))
-    except IOError as e:
+    except (IOError, OSError) as ex:
         return 'error: {0}'.format(ex)
 
 def textify(fl, html_snippet, img_size=(80, 45)):
@@ -52,7 +54,10 @@ def textify(fl, html_snippet, img_size=(80, 45)):
         def anchor_end(self):
             self.anchor = None
         def handle_image(self, source, alt, ismap, alight, width, height):
-            self.handle_data('[img="{0}" "{1}"]'.format(source, alt))
+            global basedir
+            self.handle_data(
+                '[img="{0}{1}" "{2}"]'.format(basedir, source, alt)
+            )
 
     class Formatter(formatter.AbstractFormatter):
         pass
@@ -70,6 +75,7 @@ def textify(fl, html_snippet, img_size=(80, 45)):
     return o.getvalue()
 
 def table_of_contents(fl):
+    global basedir
 
     # find opf file
     soup = BeautifulSoup(fl.read('META-INF/container.xml'))
