@@ -50,7 +50,7 @@ def run(screen, program, *args):
 
 def open_image(screen, name, s):
     ''' show images with PIL and fabulous '''
-    if images:
+    if not images:
         screen.addstr(0, 0, "missing PIL or fabulous", curses.A_REVERSE)
         return
 
