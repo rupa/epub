@@ -19,34 +19,55 @@ Keyboard commands:
 '''
 
 import curses.wrapper, curses.ascii
-import formatter, htmllib, locale, os, StringIO, re, readline, zipfile
-import base64, sys, webbrowser
+import formatter, htmllib, locale, os, StringIO, re, readline, tempfile, zipfile
+import base64, webbrowser
 
 from BeautifulSoup import BeautifulSoup
+
+try:
+    from fabulous import image
+    import PIL
+except ImportError:
+    images = False
+else:
+    images = True
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
 
 basedir = ''
 
-def open_image(name, s):
-    ''' open an image in webbrowser with a data url '''
+def run(screen, program, *args):
+    curses.nocbreak()
+    screen.keypad(0)
+    curses.echo()
+    pid = os.fork()
+    if not pid:
+        os.execvp(program, (program,) +  args)
+    os.wait()[0]
+    curses.noecho()
+    screen.keypad(1)
+    curses.cbreak()
+
+def open_image(screen, name, s):
+    ''' show images with PIL and fabulous '''
+    if images:
+        screen.addstr(0, 0, "missing PIL or fabulous", curses.A_REVERSE)
+        return
+
     ext = os.path.splitext(name)[1]
+
+    screen.erase()
+    screen.refresh()
+    curses.setsyx(0, 0)
+    image_file = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+    image_file.write(s)
+    image_file.close()
     try:
-        mime = {
-            '.gif': 'image/gif',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-        }[ext]
-    except KeyError as ex:
-        return 'error: unrecognized extension {0}'.format(ext)
-    try:
-        webbrowser.open_new_tab('data:{0};base64,{1}'.format(
-            mime,
-            base64.b64encode(s)
-        ))
-    except (IOError, OSError) as ex:
-        return 'error: {0}'.format(ex)
+        print image.Image(image_file.name)
+    except:
+        print image_file.name
+    finally:
+        os.unlink(image_file.name)
 
 def textify(fl, html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
@@ -216,7 +237,9 @@ def curses_epub(screen, fl):
         # to chapter
         elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
             if chaps[start + cursor_row][1]:
-                soup = BeautifulSoup(fl.read(chaps[start + cursor_row][1]))
+                flname = chaps[start + cursor_row][1]
+                html = fl.read(chaps[start + cursor_row][1])
+                soup = BeautifulSoup(html)
                 chap = textify(
                     fl,
                     unicode(soup.find('body')).encode('utf-8'),
@@ -291,9 +314,28 @@ def curses_epub(screen, fl):
                     try:
                         if chr(ch) == 'i':
                             for img in images:
-                                err = open_image(img, fl.read(img))
+                                err = open_image(screen, img, fl.read(img))
                                 if err:
                                     screen.addstr(0, 0, err, curses.A_REVERSE)
+
+                        # edit html
+                        elif chr(ch) == 'e':
+
+                            tmpfl = tempfile.NamedTemporaryFile(delete=False)
+                            tmpfl.write(html)
+                            tmpfl.close()
+                            run(screen, 'vim', tmpfl.name)
+                            with open(tmpfl.name) as changed:
+                                new_html = changed.read()
+                                os.unlink(tmpfl.name)
+                                if new_html != html:
+                                    pass
+                                    # write to zipfile?
+
+                            # go back to TOC
+                            screen.clear()
+                            break
+
                     except (ValueError, IndexError):
                         pass
 
