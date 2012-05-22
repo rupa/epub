@@ -69,7 +69,7 @@ def open_image(screen, name, s):
     finally:
         os.unlink(image_file.name)
 
-def textify(fl, html_snippet, img_size=(80, 45)):
+def textify(html_snippet, img_size=(80, 45)):
     ''' text dump of html '''
     class Parser(htmllib.HTMLParser):
         def anchor_end(self):
@@ -170,7 +170,7 @@ def dump_epub(fl):
         print '-' * len(title)
         if src:
             soup = BeautifulSoup(fl.read(src))
-            print textify(fl, unicode(soup.find('body')).encode('utf-8'))
+            print textify(unicode(soup.find('body')).encode('utf-8'))
         print '\n'
 
 def curses_epub(screen, fl):
@@ -241,7 +241,6 @@ def curses_epub(screen, fl):
                 html = fl.read(chaps[start + cursor_row][1])
                 soup = BeautifulSoup(html)
                 chap = textify(
-                    fl,
                     unicode(soup.find('body')).encode('utf-8'),
                     img_size=screen.getmaxyx()
                 ).split('\n')
@@ -255,8 +254,9 @@ def curses_epub(screen, fl):
                 maxy, maxx = screen.getmaxyx()
                 images = []
                 for i, line in enumerate(chap[
-                    chaps_pos[cursor_row]:chaps_pos[cursor_row]+maxy
-                    ]):
+                    chaps_pos[start + cursor_row]:
+                    chaps_pos[start + cursor_row] + maxy
+                ]):
                     try:
                         screen.addstr(i, 0, line)
                         mch = re.search('\[img="([^"]+)" "([^"]*)"\]', line)
@@ -283,24 +283,24 @@ def curses_epub(screen, fl):
 
                 # up/down page
                 elif ch in [curses.KEY_DOWN]:
-                    if chaps_pos[cursor_row] + maxy - 1 < len(chap):
-                        chaps_pos[cursor_row] += maxy - 1
+                    if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
+                        chaps_pos[start + cursor_row] += maxy - 1
                         screen.clear()
                 elif ch in [curses.KEY_UP]:
-                    if chaps_pos[cursor_row] > 0:
-                        chaps_pos[cursor_row] -= maxy - 1
-                        if chaps_pos[cursor_row] < 0:
-                            chaps_pos[cursor_row] = 0
+                    if chaps_pos[start + cursor_row] > 0:
+                        chaps_pos[start + cursor_row] -= maxy - 1
+                        if chaps_pos[start + cursor_row] < 0:
+                            chaps_pos[start + cursor_row] = 0
                         screen.clear()
 
                 # up/down line
                 elif ch in [curses.KEY_NPAGE]:
-                    if chaps_pos[cursor_row] + maxy - 1 < len(chap):
-                        chaps_pos[cursor_row] += 1
+                    if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
+                        chaps_pos[start + cursor_row] += 1
                         screen.clear()
                 elif ch in [curses.KEY_PPAGE]:
-                    if chaps_pos[cursor_row] > 0:
-                        chaps_pos[cursor_row] -= 1
+                    if chaps_pos[start + cursor_row] > 0:
+                        chaps_pos[start + cursor_row] -= 1
                         screen.clear()
 
                 #elif ch in [curses.KEY_MOUSE]:
