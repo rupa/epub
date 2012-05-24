@@ -69,7 +69,7 @@ def open_image(screen, name, s):
     finally:
         os.unlink(image_file.name)
 
-def textify(html_snippet, img_size=(80, 45)):
+def textify(html_snippet, img_size=(80, 45), maxcol=72):
     ''' text dump of html '''
     class Parser(htmllib.HTMLParser):
         def anchor_end(self):
@@ -84,12 +84,15 @@ def textify(html_snippet, img_size=(80, 45)):
         pass
 
     class Writer(formatter.DumbWriter):
+        def __init__(self, fl, maxcol=72):
+            formatter.DumbWriter.__init__(self, fl)
+            self.maxcol = maxcol
         def send_label_data(self, data):
             self.send_flowing_data(data)
             self.send_flowing_data(' ')
 
     o = StringIO.StringIO()
-    p = Parser(Formatter(Writer(o)))
+    p = Parser(Formatter(Writer(o, maxcol)))
     p.feed(html_snippet)
     p.close()
 
@@ -170,7 +173,10 @@ def dump_epub(fl):
         print '-' * len(title)
         if src:
             soup = BeautifulSoup(fl.read(src))
-            print textify(unicode(soup.find('body')).encode('utf-8'))
+            print textify(
+                unicode(soup.find('body')).encode('utf-8'),
+                maxcol=screen.getmaxyx()[1]
+            )
         print '\n'
 
 def curses_epub(screen, fl):
@@ -237,12 +243,12 @@ def curses_epub(screen, fl):
         # to chapter
         elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
             if chaps[start + cursor_row][1]:
-                flname = chaps[start + cursor_row][1]
                 html = fl.read(chaps[start + cursor_row][1])
                 soup = BeautifulSoup(html)
                 chap = textify(
                     unicode(soup.find('body')).encode('utf-8'),
-                    img_size=screen.getmaxyx()
+                    img_size=screen.getmaxyx(),
+                    maxcol=screen.getmaxyx()[1]
                 ).split('\n')
             else:
                 chap = ''
