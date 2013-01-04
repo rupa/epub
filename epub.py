@@ -354,7 +354,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('-d', '--dump', action='store_true',
                         help='dump EPUB to text')
-    parser.add_argument('-c', '--cols', action='store', type=int,
+    parser.add_argument('-c', '--cols', action='store', type=int, default=float("+inf"),
                         help='Number of columns to wrap; default is no wrapping.')
     parser.add_argument('EPUB', help='view EPUB')
     args = parser.parse_args()
