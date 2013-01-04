@@ -163,7 +163,7 @@ def check_epub(fl):
     if os.path.isfile(fl) and os.path.splitext(fl)[1].lower() == '.epub':
         return True
 
-def dump_epub(fl):
+def dump_epub(fl, maxcol=float("+inf")):
     if not check_epub(fl):
         return
     fl = zipfile.ZipFile(fl, 'r')
@@ -175,7 +175,7 @@ def dump_epub(fl):
             soup = BeautifulSoup(fl.read(src))
             print textify(
                 unicode(soup.find('body')).encode('utf-8'),
-                maxcol=screen.getmaxyx()[1]
+                maxcol=maxcol,
             )
         print '\n'
 
@@ -354,12 +354,14 @@ if __name__ == '__main__':
     )
     parser.add_argument('-d', '--dump', action='store_true',
                         help='dump EPUB to text')
+    parser.add_argument('-c', '--cols', action='store', type=int, default=float("+inf"),
+                        help='Number of columns to wrap; default is no wrapping.')
     parser.add_argument('EPUB', help='view EPUB')
     args = parser.parse_args()
 
     if args.EPUB:
         if args.dump:
-            dump_epub(args.EPUB)
+            dump_epub(args.EPUB, args.cols)
         else:
             try:
                 curses.wrapper(curses_epub, args.EPUB)
