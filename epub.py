@@ -213,13 +213,13 @@ def curses_epub(screen, fl):
             pass
 
         # up/down line
-        if ch in [curses.KEY_DOWN]:
+        if ch in [curses.KEY_DOWN, 106]:
             if start < len(chaps) - maxy:
                 start += 1
                 screen.clear()
             elif cursor_row < maxy - 1 and cursor_row < len_chaps:
                 cursor_row += 1
-        elif ch in [curses.KEY_UP]:
+        elif ch in [curses.KEY_UP, 107]:
             if start > 0:
                 start -= 1
                 screen.clear()
@@ -227,13 +227,13 @@ def curses_epub(screen, fl):
                 cursor_row -= 1
 
         # up/down page
-        elif ch in [curses.KEY_NPAGE]:
+        elif ch in [curses.KEY_NPAGE, 6]:
             if start + maxy - 1 < len(chaps):
                 start += maxy - 1
                 if len_chaps < maxy:
                     start = len(chaps) - maxy
                 screen.clear()
-        elif ch in [curses.KEY_PPAGE]:
+        elif ch in [curses.KEY_PPAGE, 2]:
             if start > 0:
                 start -= maxy - 1
                 if start < 0:
@@ -241,7 +241,7 @@ def curses_epub(screen, fl):
                 screen.clear()
 
         # to chapter
-        elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
+        elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT, 111]:
             if chaps[start + cursor_row][1]:
                 html = fl.read(chaps[start + cursor_row][1])
                 soup = BeautifulSoup(html)
@@ -283,16 +283,16 @@ def curses_epub(screen, fl):
                     pass
 
                 # to TOC
-                if ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
+                if ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT, 98]:
                     screen.clear()
                     break
 
                 # up/down page
-                elif ch in [curses.KEY_DOWN]:
+                elif ch in [curses.KEY_DOWN, 6]:
                     if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
                         chaps_pos[start + cursor_row] += maxy - 1
                         screen.clear()
-                elif ch in [curses.KEY_UP]:
+                elif ch in [curses.KEY_UP, 2]:
                     if chaps_pos[start + cursor_row] > 0:
                         chaps_pos[start + cursor_row] -= maxy - 1
                         if chaps_pos[start + cursor_row] < 0:
@@ -300,11 +300,11 @@ def curses_epub(screen, fl):
                         screen.clear()
 
                 # up/down line
-                elif ch in [curses.KEY_NPAGE]:
+                elif ch in [curses.KEY_NPAGE, 106]:
                     if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
                         chaps_pos[start + cursor_row] += 1
                         screen.clear()
-                elif ch in [curses.KEY_PPAGE]:
+                elif ch in [curses.KEY_PPAGE, 107]:
                     if chaps_pos[start + cursor_row] > 0:
                         chaps_pos[start + cursor_row] -= 1
                         screen.clear()
