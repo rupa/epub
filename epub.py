@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 python/curses epub reader. Requires BeautifulSoup
 
@@ -21,8 +22,13 @@ Keyboard commands:
 import curses.wrapper, curses.ascii
 import formatter, htmllib, locale, os, StringIO, re, readline, tempfile, zipfile
 import base64, webbrowser
+import sys
 
 from BeautifulSoup import BeautifulSoup
+
+from kitchen.text.converters import getwriter
+UTF8Writer = getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 try:
     from fabulous import image
