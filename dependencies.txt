@@ -1,4 +1,4 @@
-BeautifulSoup==3.2.0
-PIL==1.1.7
+Pillow==3.2.0
+beautifulsoup4==4.4.1
 fabulous==0.1.5
 readline==6.2.1

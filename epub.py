@@ -18,15 +18,22 @@ Keyboard commands:
         i          - open images on page in web browser
 '''
 
-import curses.wrapper, curses.ascii
-import formatter, htmllib, locale, os, StringIO, re, readline, tempfile, zipfile
-import base64, webbrowser
+import curses.wrapper
+import curses.ascii
+import formatter
+import htmllib
+import locale
+import os
+import StringIO
+import re
+import tempfile
+import zipfile
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 try:
     from fabulous import image
-    import PIL
+    import Pillow
 except ImportError:
     images = False
 else:
@@ -36,17 +43,19 @@ locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
 
 basedir = ''
 
+
 def run(screen, program, *args):
     curses.nocbreak()
     screen.keypad(0)
     curses.echo()
     pid = os.fork()
     if not pid:
-        os.execvp(program, (program,) +  args)
+        os.execvp(program, (program,) + args)
     os.wait()[0]
     curses.noecho()
     screen.keypad(1)
     curses.cbreak()
+
 
 def open_image(screen, name, s):
     ''' show images with PIL and fabulous '''
@@ -69,24 +78,29 @@ def open_image(screen, name, s):
     finally:
         os.unlink(image_file.name)
 
+
 def textify(html_snippet, img_size=(80, 45), maxcol=72):
     ''' text dump of html '''
+    class Formatter(formatter.AbstractFormatter):
+        pass
+
     class Parser(htmllib.HTMLParser):
+
         def anchor_end(self):
             self.anchor = None
+
         def handle_image(self, source, alt, ismap, alight, width, height):
             global basedir
             self.handle_data(
                 '[img="{0}{1}" "{2}"]'.format(basedir, source, alt)
             )
 
-    class Formatter(formatter.AbstractFormatter):
-        pass
-
     class Writer(formatter.DumbWriter):
+
         def __init__(self, fl, maxcol=72):
             formatter.DumbWriter.__init__(self, fl)
             self.maxcol = maxcol
+
         def send_label_data(self, data):
             self.send_flowing_data(data)
             self.send_flowing_data(' ')
@@ -97,6 +111,7 @@ def textify(html_snippet, img_size=(80, 45), maxcol=72):
     p.close()
 
     return o.getvalue()
+
 
 def table_of_contents(fl):
     global basedir
@@ -109,7 +124,7 @@ def table_of_contents(fl):
     if basedir:
         basedir = '{0}/'.format(basedir)
 
-    soup =  BeautifulSoup(fl.read(opf))
+    soup = BeautifulSoup(fl.read(opf))
 
     # title
     yield (soup.find('dc:title').text, None)
@@ -130,7 +145,7 @@ def table_of_contents(fl):
     z = {}
     if ncx:
         # get titles from the toc
-        soup =  BeautifulSoup(fl.read(ncx))
+        soup = BeautifulSoup(fl.read(ncx))
 
         for navpoint in soup('navpoint'):
             k = navpoint.content.get('src', None)
@@ -146,8 +161,9 @@ def table_of_contents(fl):
         else:
             yield (u'', section.encode('utf-8').strip())
 
+
 def list_chaps(screen, chaps, start, length):
-    for i, (title, src) in enumerate(chaps[start:start+length]):
+    for i, (title, src) in enumerate(chaps[start:start + length]):
         try:
             if start == 0:
                 screen.addstr(i, 0, '      {0}'.format(title), curses.A_BOLD)
@@ -159,9 +175,11 @@ def list_chaps(screen, chaps, start, length):
     screen.refresh()
     return i
 
+
 def check_epub(fl):
     if os.path.isfile(fl) and os.path.splitext(fl)[1].lower() == '.epub':
         return True
+
 
 def dump_epub(fl, maxcol=float("+inf")):
     if not check_epub(fl):
@@ -178,6 +196,7 @@ def dump_epub(fl, maxcol=float("+inf")):
                 maxcol=maxcol,
             )
         print '\n'
+
 
 def curses_epub(screen, fl):
     if not check_epub(fl):
@@ -320,7 +339,10 @@ def curses_epub(screen, fl):
                     try:
                         if chr(ch) == 'i':
                             for img in images:
-                                err = open_image(screen, img, fl.read(img))
+                                try:
+                                    err = open_image(screen, img, fl.read(img))
+                                except KeyError:
+                                    err = 'image not found'
                                 if err:
                                     screen.addstr(0, 0, err, curses.A_REVERSE)
 
@@ -352,10 +374,18 @@ if __name__ == '__main__':
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=__doc__,
     )
-    parser.add_argument('-d', '--dump', action='store_true',
-                        help='dump EPUB to text')
-    parser.add_argument('-c', '--cols', action='store', type=int, default=float("+inf"),
-                        help='Number of columns to wrap; default is no wrapping.')
+    parser.add_argument(
+        '-d', '--dump',
+        action='store_true',
+        help='dump EPUB to text'
+    )
+    parser.add_argument(
+        '-c', '--cols',
+        action='store',
+        type=int,
+        default=float("+inf"),
+        help='Number of columns to wrap; default is no wrapping.'
+    )
     parser.add_argument('EPUB', help='view EPUB')
     args = parser.parse_args()
 
