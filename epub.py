@@ -43,6 +43,16 @@ locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
 
 basedir = ''
 
+ESCAPE_KEYS = [ord('q'), curses.ascii.ESC]
+TOC_DOWN_LINE_KEYS = [curses.KEY_DOWN]
+TOC_UP_LINE_KEYS = [curses.KEY_UP]
+TOC_DOWN_PAGE_KEYS = [curses.KEY_NPAGE]
+TOC_UP_PAGE_KEYS = [curses.KEY_PPAGE]
+CHAPTER_DOWN_PAGE_KEYS = [curses.KEY_DOWN]
+CHAPTER_UP_PAGE_KEYS = [curses.KEY_UP]
+CHAPTER_DOWN_LINE_KEYS = [curses.KEY_NPAGE]
+CHAPTER_UP_LINE_KEYS = [curses.KEY_PPAGE]
+CHAPTERTOCSWITCH_KEYS = [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]
 
 def run(screen, program, *args):
     curses.nocbreak()
@@ -222,23 +232,17 @@ def curses_epub(screen, fl):
         screen.move(cursor_row, 0)
         ch = screen.getch()
 
-        # quit
-        if ch == curses.ascii.ESC:
+        if ch in ESCAPE_KEYS:
             return
-        try:
-           if chr(ch) == 'q':
-               return
-        except:
-            pass
 
         # up/down line
-        if ch in [curses.KEY_DOWN]:
+        if ch in TOC_DOWN_LINE_KEYS:
             if start < len(chaps) - maxy:
                 start += 1
                 screen.clear()
             elif cursor_row < maxy - 1 and cursor_row < len_chaps:
                 cursor_row += 1
-        elif ch in [curses.KEY_UP]:
+        elif ch in TOC_UP_LINE_KEYS:
             if start > 0:
                 start -= 1
                 screen.clear()
@@ -246,13 +250,13 @@ def curses_epub(screen, fl):
                 cursor_row -= 1
 
         # up/down page
-        elif ch in [curses.KEY_NPAGE]:
+        elif ch in TOC_DOWN_PAGE_KEYS:
             if start + maxy - 1 < len(chaps):
                 start += maxy - 1
                 if len_chaps < maxy:
                     start = len(chaps) - maxy
                 screen.clear()
-        elif ch in [curses.KEY_PPAGE]:
+        elif ch in TOC_UP_PAGE_KEYS:
             if start > 0:
                 start -= maxy - 1
                 if start < 0:
@@ -260,7 +264,7 @@ def curses_epub(screen, fl):
                 screen.clear()
 
         # to chapter
-        elif ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
+        elif ch in CHAPTERTOCSWITCH_KEYS:
             if chaps[start + cursor_row][1]:
                 html = fl.read(chaps[start + cursor_row][1])
                 soup = BeautifulSoup(html)
@@ -293,25 +297,20 @@ def curses_epub(screen, fl):
                 ch = screen.getch()
 
                 # quit
-                if ch == curses.ascii.ESC:
+                if ch in ESCAPE_KEYS:
                     return
-                try:
-                   if chr(ch) == 'q':
-                       return
-                except:
-                    pass
 
                 # to TOC
-                if ch in [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]:
+                if ch in CHAPTERTOCSWITCH_KEYS:
                     screen.clear()
                     break
 
                 # up/down page
-                elif ch in [curses.KEY_DOWN]:
+                elif ch in CHAPTER_DOWN_PAGE_KEYS:
                     if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
                         chaps_pos[start + cursor_row] += maxy - 1
                         screen.clear()
-                elif ch in [curses.KEY_UP]:
+                elif ch in CHAPTER_UP_PAGE_KEYS:
                     if chaps_pos[start + cursor_row] > 0:
                         chaps_pos[start + cursor_row] -= maxy - 1
                         if chaps_pos[start + cursor_row] < 0:
@@ -319,11 +318,11 @@ def curses_epub(screen, fl):
                         screen.clear()
 
                 # up/down line
-                elif ch in [curses.KEY_NPAGE]:
+                elif ch in CHAPTER_DOWN_LINE_KEYS:
                     if chaps_pos[start + cursor_row] + maxy - 1 < len(chap):
                         chaps_pos[start + cursor_row] += 1
                         screen.clear()
-                elif ch in [curses.KEY_PPAGE]:
+                elif ch in CHAPTER_UP_LINE_KEYS:
                     if chaps_pos[start + cursor_row] > 0:
                         chaps_pos[start + cursor_row] -= 1
                         screen.clear()
