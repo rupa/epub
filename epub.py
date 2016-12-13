@@ -54,6 +54,7 @@ CHAPTER_DOWN_LINE_KEYS = [curses.KEY_NPAGE]
 CHAPTER_UP_LINE_KEYS = [curses.KEY_PPAGE]
 CHAPTERTOCSWITCH_KEYS = [curses.ascii.HT, curses.KEY_RIGHT, curses.KEY_LEFT]
 
+
 def run(screen, program, *args):
     curses.nocbreak()
     screen.keypad(0)
@@ -178,7 +179,8 @@ def list_chaps(screen, chaps, start, length):
             if start == 0:
                 screen.addstr(i, 0, '      {0}'.format(title), curses.A_BOLD)
             else:
-                screen.addstr(i, 0, '{0:-5} {1}'.format(start, title))
+                screen.clrtoeol()
+                screen.addstr(i, 0, '{0:-5} {1}'.format(start, title.strip()))
         except:
             pass
         start += 1
