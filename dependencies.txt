@@ -2,3 +2,15 @@ Pillow==3.2.0
 beautifulsoup4==4.4.1
 fabulous==0.1.5
 readline==6.2.1
+
+fabulous' lobstertech is down.  The package cane be gotten via:
+https://web.archive.org/web/20110620154658/http://lobstertech.com/media/file/fabulous/fabulous-0.1.5.tar.gz
+
+fabulous requires grapefruit which is no longer in.  This can be gotten via:
+
+http://grapefruit.googlecode.com/files/grapefruit-0.1a3.tar.gz
+
+Both can be installed manually via:
+
+pip install [pkg].tar.gz
+~                          
