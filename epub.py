@@ -41,6 +41,7 @@ else:
 
 locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
 
+night=False
 basedir = ''
 
 ESCAPE_KEYS = [ord('q'), curses.ascii.ESC]
@@ -211,6 +212,12 @@ def dump_epub(fl, maxcol=float("+inf")):
 
 
 def curses_epub(screen, fl):
+    screen = curses.initscr();
+    if(night):
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    else:
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE) #day
+    screen.bkgd(' ', curses.color_pair(1));
     if not check_epub(fl):
         return
 
@@ -289,7 +296,7 @@ def curses_epub(screen, fl):
                     chaps_pos[start + cursor_row] + maxy
                 ]):
                     try:
-                        screen.addstr(i, 0, line)
+                        screen.addstr(i, 0, line, curses.color_pair(1))
                         mch = re.search('\[img="([^"]+)" "([^"]*)"\]', line)
                         if mch:
                             images.append(mch.group(1))
@@ -387,6 +394,13 @@ if __name__ == '__main__':
         default=float("+inf"),
         help='Number of columns to wrap; default is no wrapping.'
     )
+    parser.add_argument(
+            '-n', '--night',
+            action='store_true',
+            default=False,
+            help='Light letters on dark background.'
+        )
+
     parser.add_argument('EPUB', help='view EPUB')
     args = parser.parse_args()
 
@@ -395,6 +409,8 @@ if __name__ == '__main__':
             dump_epub(args.EPUB, args.cols)
         else:
             try:
+                if args.night:
+                    night=True
                 curses.wrapper(curses_epub, args.EPUB)
             except KeyboardInterrupt:
                 pass
